@@ -4,11 +4,15 @@ from __future__ import annotations
 from http import HTTPStatus
 from flask_restful.reqparse import Namespace
 
+from controllers import hashing
 from models import users
 
 
 def handle_post(data: Namespace) -> tuple[dict[str, str], int]:
     """Handle the POST request."""
+    plaintext_password = data.get("password")
+    if plaintext_password:
+        data["password"] = hashing.bcrypt(plaintext_password)
     users.User.create(data)
     return {
         "message": "User successfully registered."
@@ -32,6 +36,10 @@ def handle_get(user_id: int) -> tuple[dict[str, str | int |
 
 def handle_put(user_id: int, data: Namespace) -> tuple[dict[str, str], int]:
     """Handle the PUT request."""
+    plaintext_password = data.get("password")
+    if plaintext_password:
+        data["password"] = hashing.bcrypt(plaintext_password)
+
     if not users.User.update(user_id, data):
         return {
             "message": "User to update not found."

@@ -319,6 +319,43 @@ Note the statement `from __future__ import annotations`.  Since this project was
 Python 3.9, this import is necessary for Python to properly interpret the type hints.  This 
 import is not needed for later Python versions.
 
+#### Chapter 3: Setting up password hashing
+
+Python libraries added:
+
+    bcrypt
+    passlib
+
+For security, we need to save the hash of the users' passwords, not the actual passwords.  We
+use the `passlib` library for this.  We add a new module `hashing.py` to the `controllers` package:
+
+    ...
+    pwd_ctx = CryptContext(schemes=["bcrypt"], deprecated="auto")
+    
+    
+    def bcrypt(password: str) -> str:
+        """Return a hash of the password."""
+        return pwd_ctx.hash(password)
+    
+    
+    def verify(hashed_string: str, plaintext_password: str) -> bool:
+        """Check whether the given plaintext password equals the hashed string."""
+        return pwd_ctx.verify(plaintext_password, hashed_string)
+
+This module is a helper module for password hashing and verification.
+
+In `users.py` of `controllers` module, we modify the functions that register new users and 
+update existing users.  We first hash the password in the data received (if the password exists),
+before forwarding the data.  For example:
+
+    ...
+    def handle_post(data: Namespace) -> tuple[dict[str, str], int]:
+        """Handle the POST request."""
+        plaintext_password = data.get("password")
+        if plaintext_password:
+            data["password"] = hashing.bcrypt(plaintext_password)
+    ...
+
 ### References
 
 Please refer to the documentations for more information.
