@@ -3,6 +3,7 @@ from __future__ import annotations
 
 from http import HTTPStatus
 from flask_restful.reqparse import Namespace
+from flask_jwt_extended import create_access_token
 
 from controllers import hashing
 from models import users
@@ -66,3 +67,21 @@ def handle_list() -> tuple[dict[str, str | int], int]:
         "result": users.User.list(),
         "message": "Users successfully retrieved."
     }, HTTPStatus.OK
+
+
+def handle_login(data: Namespace) -> tuple[dict[str, str], int]:
+    """Handle the POST request."""
+    username = data["username"]
+    plaintext_password = data["password"]
+
+    obj = users.User.search_by_username(username)
+    if obj and hashing.verify(obj.password, plaintext_password):
+        token = create_access_token(identity=username)
+        return {
+            "message": f"Logged in as {username}.",
+            "token": token
+        }, HTTPStatus.OK
+
+    return {
+        "message": "Invalid credentials."
+    }, HTTPStatus.UNAUTHORIZED

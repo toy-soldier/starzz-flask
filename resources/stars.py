@@ -1,4 +1,5 @@
 """This module defines the StarRegisterOrList() and Star() resources to handle requests to /user."""
+from flask_jwt_extended import jwt_required
 from flask_restful import Resource, reqparse
 
 from controllers import stars
@@ -50,6 +51,7 @@ def parse_request() -> reqparse.Namespace:
 class StarRegisterOrList(Resource):
     """Resource to handle requests to register new, or list the existing, stars."""
 
+    @jwt_required()
     def post(self) -> tuple[dict[str, str], int]:
         """Handle POST method."""
         data = parse_request()
@@ -67,11 +69,13 @@ class Star(Resource):
         """Handle GET method."""
         return stars.handle_get(star_id)
 
+    @jwt_required()
     def put(self, star_id: int) -> tuple[dict[str, str], int]:
         """Handle PUT method."""
         data = parse_request()
         return stars.handle_put(star_id, data)
 
+    @jwt_required()
     def delete(self, star_id: int) -> tuple[None, int]:
         """Handle DELETE method."""
         return stars.handle_delete(star_id)

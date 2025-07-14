@@ -35,6 +35,11 @@ class User(db.Model):
         return cls.query.get(user_id)
 
     @classmethod
+    def search_by_username(cls, username: str) -> Self | None:
+        """Return the desired user object."""
+        return cls.query.filter(cls.username == username).first()
+
+    @classmethod
     def create(cls, data: dict[str, str | int]) -> None:
         """Insert a new object into the database."""
         obj = cls(data)

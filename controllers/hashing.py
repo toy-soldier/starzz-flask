@@ -10,6 +10,6 @@ def bcrypt(password: str) -> str:
     return pwd_ctx.hash(password)
 
 
-def verify(hashed_string: str, plaintext_password: str) -> bool:
-    """Check whether the given plaintext password equals the hashed string."""
-    return pwd_ctx.verify(plaintext_password, hashed_string)
+def verify(hashed_password: str, plaintext_string: str) -> bool:
+    """Check whether the given plaintext string equals the hashed password."""
+    return pwd_ctx.verify(plaintext_string, hashed_password)

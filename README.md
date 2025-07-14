@@ -338,9 +338,9 @@ use the `passlib` library for this.  We add a new module `hashing.py` to the `co
         return pwd_ctx.hash(password)
     
     
-    def verify(hashed_string: str, plaintext_password: str) -> bool:
-        """Check whether the given plaintext password equals the hashed string."""
-        return pwd_ctx.verify(plaintext_password, hashed_string)
+    def verify(hashed_password: str, plaintext_string: str) -> bool:
+        """Check whether the given plaintext string equals the hashed password."""
+        return pwd_ctx.verify(plaintext_string, hashed_password)
 
 This module is a helper module for password hashing and verification.
 
@@ -355,6 +355,110 @@ before forwarding the data.  For example:
         if plaintext_password:
             data["password"] = hashing.bcrypt(plaintext_password)
     ...
+
+#### Chapter 4: Setting up authorization using JWT
+
+Python libraries added:
+
+    Flask-JWT-Extended
+
+We use JWT (JSON Web Token) to protect our endpoints.  To enable it, we add this to `config.py`:
+
+    ...
+    # specify the JWT secret key and token expiration (in minutes)
+    app.config["JWT_SECRET_KEY"] = constants.JWT_SECRET_KEY
+    app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=constants.JWT_ACCESS_TOKEN_EXPIRES)
+    
+    jwt = JWTManager(app)
+
+With JWT, we can ensure that only users who are logged in can access sensitive endpoints.  We thus
+need to add a `login` endpoint to `app.py`:
+
+    ...
+        api.add_resource(users.UserLogin, "/login")
+    ...
+
+JWT protects our endpoints via tokens.  Any request to the sensitive endpoints must also contain 
+the token.  The token is generated upon successful user login.  So in `users.py` of the `resources` 
+package we add this class:
+
+    ...
+    class UserLogin(Resource):
+        """Resource to handle log in requests."""
+    
+        def post(self) -> tuple[dict[str, str], int]:
+            """Handle POST method."""
+            data = parse_request(for_login=True)
+            return users.handle_login(data)
+
+(Note that we reuse the parser we defined earlier.  We specify `for_login=True` so the parser will only
+require `username` and `password` to be present in the request, i.e. not require other fields such 
+as `first_name`.)
+
+The actual token generation is done in `users.py` of the `controllers` package:
+
+    ...
+    def handle_login(data: Namespace) -> tuple[dict[str, str], int]:
+        """Handle the POST request."""
+        username = data["username"]
+        plaintext_password = data["password"]
+    
+        obj = users.User.search_by_username(username)
+        if obj and hashing.verify(obj.password, plaintext_password):
+            token = create_access_token(identity=username)
+            return {
+                "message": f"Logged in as {username}.",
+                "token": token
+            }, HTTPStatus.OK
+    
+        return {
+            "message": "Invalid credentials."
+        }, HTTPStatus.UNAUTHORIZED
+
+The function gets the user with the specified username from the database.  It then verifies 
+the given password against the hashed password.  If successful, a token is generated.
+
+Previously in `users.py` of the `models` package, we only had a method to search users by id.  We 
+now add a method in this module, to search by username:
+
+    ...
+    @classmethod
+    def search_by_username(cls, username: str) -> Self | None:
+        """Return the desired user object."""
+        return cls.query.filter(cls.username == username).first()
+
+We now decorate all sensitive endpoints defined in the `resources` package with `@jwt_required`.  For 
+example in `galaxies.py` we define the endpoints for POST, PUT and DELETE to be sensitive:
+
+    ...
+    class GalaxyRegisterOrList(Resource):
+        """Resource to handle requests to register new, or list the existing, galaxies."""
+    
+        @jwt_required()
+        def post(self) -> tuple[dict[str, str], int]:
+            """Handle POST method."""
+        ...
+    
+        def get(self) -> tuple[dict[str, str], int]:
+            """Handle GET method."""
+            ...
+    
+    class Galaxy(Resource):
+        """Resource to handle requests to view, update and delete existing galaxies."""
+    
+        def get(self, galaxy_id: int) -> tuple[dict[str, str], int]:
+            """Handle GET method."""
+            ...
+    
+        @jwt_required()
+        def put(self, galaxy_id: int) -> tuple[dict[str, str], int]:
+            """Handle PUT method."""
+            ...
+    
+        @jwt_required()
+        def delete(self, galaxy_id: int) -> tuple[None, int]:
+            """Handle DELETE method."""
+            ...
 
 ### References
 

@@ -1,6 +1,7 @@
 """This module defines the ConstellationRegisterOrList() and Constellation() resources to handle requests to /user."""
 from __future__ import annotations
 
+from flask_jwt_extended import jwt_required
 from flask_restful import Resource, reqparse
 
 from controllers import constellations
@@ -37,6 +38,7 @@ def parse_request() -> reqparse.Namespace:
 class ConstellationRegisterOrList(Resource):
     """Resource to handle requests to register new, or list the existing, constellations."""
 
+    @jwt_required()
     def post(self) -> tuple[dict[str, str], int]:
         """Handle POST method."""
         data = parse_request()
@@ -54,11 +56,13 @@ class Constellation(Resource):
         """Handle GET method."""
         return constellations.handle_get(constellation_id)
 
+    @jwt_required()
     def put(self, constellation_id: int) -> tuple[dict[str, str], int]:
         """Handle PUT method."""
         data = parse_request()
         return constellations.handle_put(constellation_id, data)
 
+    @jwt_required()
     def delete(self, constellation_id: int) -> tuple[None, int]:
         """Handle DELETE method."""
         return constellations.handle_delete(constellation_id)

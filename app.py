@@ -17,6 +17,7 @@ def main() -> None:
     api.add_resource(stars.Star, "/stars/<int:star_id>")
     api.add_resource(users.UserRegisterOrList, "/users")
     api.add_resource(users.User, "/users/<int:user_id>")
+    api.add_resource(users.UserLogin, "/login")
 
     config.app.run(port=5000, debug=True)
 

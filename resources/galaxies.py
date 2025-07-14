@@ -1,4 +1,5 @@
 """This module defines the GalaxyRegisterOrList() and Galaxy() resources to handle requests to /user."""
+from flask_jwt_extended import jwt_required
 from flask_restful import Resource, reqparse
 
 from controllers import galaxies
@@ -45,6 +46,7 @@ def parse_request() -> reqparse.Namespace:
 class GalaxyRegisterOrList(Resource):
     """Resource to handle requests to register new, or list the existing, galaxies."""
 
+    @jwt_required()
     def post(self) -> tuple[dict[str, str], int]:
         """Handle POST method."""
         data = parse_request()
@@ -62,11 +64,13 @@ class Galaxy(Resource):
         """Handle GET method."""
         return galaxies.handle_get(galaxy_id)
 
+    @jwt_required()
     def put(self, galaxy_id: int) -> tuple[dict[str, str], int]:
         """Handle PUT method."""
         data = parse_request()
         return galaxies.handle_put(galaxy_id, data)
 
+    @jwt_required()
     def delete(self, galaxy_id: int) -> tuple[None, int]:
         """Handle DELETE method."""
         return galaxies.handle_delete(galaxy_id)
