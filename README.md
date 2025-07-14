@@ -56,6 +56,8 @@ define it as `AUTO_INCREMENT`.
 
 All code committed at each chapter is available with the commit message of the chapter name.
 
+<img src="assets/commits.jpg" width="500" height="200"/>
+
 #### Chapter 1: Setting up the routes
 
 Python libraries added:
@@ -360,7 +362,7 @@ before forwarding the data.  For example:
 
 Python libraries added:
 
-    Flask-JWT-Extended
+    flask_jwt_extended
 
 We use JWT (JSON Web Token) to protect our endpoints.  To enable it, we add this to `config.py`:
 
@@ -459,6 +461,11 @@ example in `galaxies.py` we define the endpoints for POST, PUT and DELETE to be 
         def delete(self, galaxy_id: int) -> tuple[None, int]:
             """Handle DELETE method."""
             ...
+
+The token is passed in the request header:
+
+<img src="assets/postman.jpg" width="500" height="200"/>
+
 
 ### References
 
